@@ -1,8 +1,9 @@
 import emoji
 from loguru import logger
 
+import constants
 from src.bot import bot
-from src.constants import bot_messages, keyboards, keys, states
+from src.constants import keyboards, keys
 from src.data import DATA_DIR
 from src.db import mongodb
 from src.users import Users
@@ -33,11 +34,9 @@ class BursBot():
 
         @self.bot.message_handler(commands=['start'])
         def start(message):
-            start_text = f'سلام <strong>{message.chat.first_name}</strong>، خوش اومدی :man_raising_hand:'
-            start_text += '\n\n  نماد بورسی مورد نظرتو تایپ کن:'
             self.send_message(
                 message.chat.id,
-                start_text,
+                constants.START_MESSAGE.format(first_name=message.chat.first_name),
                 reply_markup=keyboards.main
                 )
 
@@ -47,7 +46,7 @@ class BursBot():
             # TODO: show basic information of the symbol to user
             self.send_message(
                 message.chat.id,
-                f'<strong>{message.text}</strong>',
+                f"<strong>{self.stock_symbols[message.text]['name']}</strong>",
                 reply_markup=keyboards.stock
             )
 
@@ -60,18 +59,17 @@ class BursBot():
 
             self.send_message(
                 message.chat.id,
-                f"{current_symbol} {bot_messages.stock_added} {bot_messages.new_symbol}",
+                constants.ADD_STOCK_MESSAGE.format(symbol=current_symbol),
                 reply_markup=keyboards.main
                 )
 
         @self.bot.message_handler(regexp=keys.portfolio)
         def portfolio(message):
-            portfolio_text = bot_messages.portfolio
-            portfolio_text += ':radio_button:'
-            portfolio_text += '\n :radio_button: '.join(self.user.portfolio.keys())
+            portfolio_text = '\n'.join(self.user.portfolio.keys())
+
             self.send_message(
                 message.chat.id,
-                portfolio_text,
+                constants.PORTFOLIO_MESSAGE.format(portfolio=portfolio_text),
                 reply_markup=keyboards.exit
                 )
 
@@ -79,13 +77,13 @@ class BursBot():
         def exit(message):
             self.send_message(
                 message.chat.id,
-                (bot_messages.exit + bot_messages.new_symbol),
+                constants.EXIT_MESSAGE,
                 reply_markup=keyboards.main
                 )
 
         @self.bot.message_handler(func=lambda m: True)
         def echo(message):
-            self.send_message(message.chat.id, (bot_messages.not_stock + bot_messages.new_symbol))
+            self.send_message(message.chat.id, constants.NOT_STOCK_MESSAGE.format(symbol=message.text))
 
     def run(self):
         logger.info('Bot is running...')

@@ -4,8 +4,8 @@ from src.utils.keyboard import create_keyboard
 
 keys = SimpleNamespace(
     settings = ':gear: تنظیمات',
-    add_stock =  ':plus: افزودن نماد به پرتفوی',
-    portfolio = ':basket: پرتفوی',
+    add_stock =  ':plus: افزودن نماد به پرتفو',
+    portfolio = ':basket: پرتفو',
     exit = ':cross_mark: خروج',
 )
 
@@ -20,10 +20,27 @@ states  = SimpleNamespace(
     stock = 'STOCK',
 )
 
-bot_messages = SimpleNamespace(
-    exit = 'خارج شدید.',
-    not_stock = 'متاسفانه، نماد مورد نظر شما یافت نشد! :thumbs_down:',
-    stock_added = 'با موفقیت به پورتفوی اضافه شد :check_mark_button:',
-    portfolio = f"پورتفوی شما :basket: \n {20 * '_'} \n\n",
-    new_symbol = f"\n {70 * 'ـ'} \n\n می‌تونی نماد جدید تایپ کنی:"
+START_MESSAGE = (
+    'سلام <strong>{first_name}</strong>، خوش اومدی :man_raising_hand:'
+    '\n\n  نماد بورسی مورد نظرتو تایپ کن:'
+)
+EXIT_MESSAGE = (
+    'خارج شدی.'
+    f"\n {30 * 'ـ'}"
+    '\n\n اگه می‌خوای نماد جدید تایپ کن.'
+)
+NOT_STOCK_MESSAGE = (
+    'متاسفانه، نمادی با نام {symbol} یافت نشد! :thumbs_down:'
+    f"\n {70 * 'ـ'}"
+    '\n\n اگه می‌خوای نماد جدید تایپ کن.'
+)
+ADD_STOCK_MESSAGE = (
+    '<strong>{symbol}</strong> با موفقیت به پورتفو اضافه شد :check_mark_button:'
+    f"\n {70 * 'ـ'}"
+    '\n\n اگه می‌خوای نماد جدید تایپ کن.'
+)
+PORTFOLIO_MESSAGE = (
+    f"پورتفوی شما :basket: \n"
+    f"{20 * '_'} \n\n"
+    '{portfolio}'
 )
