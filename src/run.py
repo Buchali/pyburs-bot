@@ -3,8 +3,10 @@ from loguru import logger
 
 from src.bot import bot
 from src.constants import bot_messages, keyboards, keys, states
+from src.data import DATA_DIR
 from src.db import mongodb
 from src.users import Users
+from src.utils.io import read_json
 
 
 class BursBot():
@@ -20,6 +22,9 @@ class BursBot():
         # database
         self.db = db
 
+        # Load stock symbols
+        self.stock_symbols = read_json(DATA_DIR / 'stock_symbols.json')
+
     def handlers(self):
         @self.bot.middleware_handler(update_types=['message'])
         def init_handlers(bot_instance, message):
@@ -28,50 +33,70 @@ class BursBot():
 
         @self.bot.message_handler(commands=['start'])
         def start(message):
+            start_text = f'سلام <strong>{message.chat.first_name}</strong>، خوش اومدی :man_raising_hand:'
+            start_text += '\n\n  نماد بورسی مورد نظرتو تایپ کن:'
             self.send_message(
-                 message.chat.id,
-                f'{bot_messages.start} <strong>{message.chat.first_name}</strong>!',
+                message.chat.id,
+                start_text,
                 reply_markup=keyboards.main
                 )
 
-            self.user.update_state(states.main)
-
-        @self.bot.message_handler(regexp = keys.add_stock)
-        def add_stock(message):
+        @self.bot.message_handler(func=lambda message: message.text in self.stock_symbols)
+        def stock(message):
+            self.user.update_current_symbol(message.text)
+            # TODO: show basic information of the symbol to user
             self.send_message(
-                 message.chat.id,
-                bot_messages.add_stock,
+                message.chat.id,
+                f'<strong>{message.text}</strong>',
+                reply_markup=keyboards.stock
+            )
+
+        @self.bot.message_handler(regexp=keys.add_stock)
+        def add_stock(message):
+            current_symbol = self.user.current_symbol
+            portfolio = self.user.portfolio
+            portfolio[current_symbol] = self.stock_symbols[current_symbol]
+            self.user.update_portfolio(portfolio)
+
+            self.send_message(
+                message.chat.id,
+                f"{current_symbol} {bot_messages.stock_added} {bot_messages.new_symbol}",
+                reply_markup=keyboards.main
+                )
+
+        @self.bot.message_handler(regexp=keys.portfolio)
+        def portfolio(message):
+            portfolio_text = bot_messages.portfolio
+            portfolio_text += ':radio_button:'
+            portfolio_text += '\n :radio_button: '.join(self.user.portfolio.keys())
+            self.send_message(
+                message.chat.id,
+                portfolio_text,
                 reply_markup=keyboards.exit
                 )
-            stock_name = message.text
-            self.user.update_state(states.add_stock)
 
-        @self.bot.message_handler(regexp = keys.exit)
+        @self.bot.message_handler(regexp=keys.exit)
         def exit(message):
             self.send_message(
-                 message.chat.id,
-                bot_messages.exit,
+                message.chat.id,
+                (bot_messages.exit + bot_messages.new_symbol),
                 reply_markup=keyboards.main
                 )
-            self.user.update_state(states.main)
 
         @self.bot.message_handler(func=lambda m: True)
         def echo(message):
-            self.send_message(
-                message.chat.id, message.text,
-                reply_markup=keyboards.main
-            )
+            self.send_message(message.chat.id, (bot_messages.not_stock + bot_messages.new_symbol))
 
     def run(self):
         logger.info('Bot is running...')
         self.bot.infinity_polling()
 
-    def send_message(self, chat_id, text, reply_markup=None, demojize=True):
+    def send_message(self, chat_id, text, reply_markup=None, emojize=True):
         """
         send message for telegram bot.
         """
-        if demojize:
-            text = emoji.demojize(text)
+        if emojize:
+            text = emoji.emojize(text)
 
         self.bot.send_message(chat_id, text, reply_markup=reply_markup)
 
