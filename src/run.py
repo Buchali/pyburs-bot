@@ -4,10 +4,9 @@ from loguru import logger
 import constants
 from src.bot import bot
 from src.constants import keyboards, keys, states
-from src.data import DATA_DIR
 from src.db import mongodb
+from src.stock import Stock
 from src.users import Users
-from src.utils.io import read_json
 
 
 class BursBot():
@@ -23,8 +22,8 @@ class BursBot():
         # database
         self.db = db
 
-        # Load stock symbols
-        self.stock_symbols = read_json(DATA_DIR / 'stock_symbols.json')
+        # Load stock
+        self.stock = Stock()
 
     def handlers(self):
         @self.bot.middleware_handler(update_types=['message'])
@@ -63,14 +62,15 @@ class BursBot():
                     )
                     self.user.update_state(states.MAIN)
 
-        @self.bot.message_handler(func=lambda message: message.text in self.stock_symbols)
+        @self.bot.message_handler(func=lambda message: message.text in self.stock.all_symbols)
         def symbol(message):
             self.user.update_current_symbol(message.text)
-
-            # TODO: show basic information of the symbol to user
             self.send_message(
                 message.chat.id,
-                f"<strong>{self.stock_symbols[message.text]['name']}</strong>",
+                constants.SYMBOL_INFO_MESSAGE.format(
+                    symbol=message.text,
+                    last_price=self.stock.last_price(message.text)
+                ),
                 reply_markup=keyboards.symbol
             )
 
@@ -78,7 +78,7 @@ class BursBot():
         def add_symbol(message):
             current_symbol = self.user.current_symbol
             portfolio = self.user.portfolio
-            portfolio[current_symbol] = self.stock_symbols[current_symbol]
+            portfolio[current_symbol] = self.stock.all_symbols[current_symbol]
             self.user.update_portfolio(portfolio)
 
             self.send_message(

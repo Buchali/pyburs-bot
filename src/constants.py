@@ -24,6 +24,11 @@ states  = SimpleNamespace(
     PORTFOLIO = 'PORTFOLIO',
 )
 
+urls = SimpleNamespace(
+    TSE_SYMBOL_INFO = "http://www.tsetmc.com/tsev2/data/instinfofast.aspx?i={index}&c=0&e=1",
+    TSE_SYMBOL_ADDRESS = "http://tsetmc.com/Loader.aspx?ParTree=151311&i={index}",
+)
+
 START_MESSAGE = (
     'سلام <strong>{first_name}</strong>، خوش اومدی :man_raising_hand:'
     f"\n {70 * 'ـ'}"
@@ -55,11 +60,17 @@ DELETE_SYMBOL_MESSAGE = (
     "نمادی که می‌خوای حذف شه رو تایپ کن."
 )
 DELETED_MESSAGE = (
-    '<strong>{symbol}</strong> با موفقیت از پورتفو حذف شد :basket::check_mark_button:'
+    '<strong>{symbol}</strong> با موفقیت از پورتفو حذف شد :wastebasket::check_mark_button:'
 )
 NOT_IN_PORTFOLIO_MESSAGE = (
     'متاسفانه، نمادی با نام {symbol} در پرتفو شما وجود ندارد! :thumbs_down:'
 )
 EMPTY_PORTFOLIO_MESSAGE = (
     "هیچ نمادی در پرتفو وجود ندارد! "
+)
+
+SYMBOL_INFO_MESSAGE = (
+    '<strong>{symbol}</strong>'
+    f"\n {30 * 'ـ'}"
+    '\n\n قیمت معامله: {last_price} ریال'
 )
