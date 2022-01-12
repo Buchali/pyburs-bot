@@ -28,11 +28,17 @@ class BursBot():
     def handlers(self):
         @self.bot.middleware_handler(update_types=['message'])
         def init_handlers(bot_instance, message):
+            """
+            Initialize Handelers.
+            """
             self.user = Users(chat_id=message.chat.id, bursbot= self, mongodb=self.db, message= message)
             message.text = emoji.demojize(message.text)
 
         @self.bot.message_handler(commands=['start'])
         def start(message):
+            """
+            Handles '/start' command.
+            """
             self.user.update_state(states.MAIN)
             self.send_message(
                 message.chat.id,
@@ -41,6 +47,9 @@ class BursBot():
                 )
         @self.bot.message_handler(func=lambda message: message.text in self.user.portfolio)
         def portfolio_symbol(message):
+            """
+            Handles portfolio symbols.
+            """
             self.user.update_current_symbol(message.text)
             # user wants to delete a symbol
             if self.user.state == states.DELETE:
@@ -64,6 +73,9 @@ class BursBot():
 
         @self.bot.message_handler(func=lambda message: message.text in self.stock.all_symbols)
         def symbol(message):
+            """
+            Handles all symbols except the portfolio ones.
+            """
             self.user.update_current_symbol(message.text)
             self.send_message(
                 message.chat.id,
@@ -76,6 +88,9 @@ class BursBot():
 
         @self.bot.message_handler(regexp=keys.add_symbol)
         def add_symbol(message):
+            """
+            Add symbol to portfolio
+            """
             current_symbol = self.user.current_symbol
             portfolio = self.user.portfolio
             portfolio[current_symbol] = self.stock.all_symbols[current_symbol]
@@ -90,6 +105,10 @@ class BursBot():
 
         @self.bot.message_handler(regexp=keys.portfolio)
         def portfolio(message):
+            """
+            Display portfolio.
+            """
+            # Notify if portfolio is empty.
             if not self.user.portfolio.keys():
                 self.send_message(
                 message.chat.id,
@@ -108,6 +127,9 @@ class BursBot():
 
         @self.bot.message_handler(regexp=keys.delete_symbol)
         def delete_symbol(message):
+            """
+            Delete a symbol from portfolio
+            """
             self.send_message(
                 message.chat.id,
                 constants.DELETE_SYMBOL_MESSAGE,
@@ -117,6 +139,9 @@ class BursBot():
 
         @self.bot.message_handler(regexp=keys.exit)
         def exit(message):
+            """
+            Exit and back to Main state.
+            """
             self.send_message(
                 message.chat.id,
                 constants.EXIT_MESSAGE,
@@ -125,10 +150,16 @@ class BursBot():
             self.user.update_state(states.MAIN)
 
         @self.bot.message_handler(func=lambda m: True)
-        def echo(message):
+        def unidentifed(message):
+            """
+            User typed an unidentifed symbol, message, command ...
+            """
             self.send_message(message.chat.id, constants.NOT_SYMBOL_MESSAGE.format(symbol=message.text))
 
     def run(self):
+        """
+        Run the bot.
+        """
         logger.info('Bot is running...')
         self.bot.infinity_polling()
 
