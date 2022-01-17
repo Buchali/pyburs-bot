@@ -7,14 +7,33 @@ keys = SimpleNamespace(
     add_symbol =  ':inbox_tray: افزودن نماد به پرتفو',
     portfolio = ':basket: پرتفو',
     exit = ':cross_mark: خروج',
-    delete_symbol = ':wastebasket: حذف نماد'
+    delete_symbol = ':wastebasket: حذف نماد',
+    stop_loss = ':no_entry: تنظیم حد ضرر',
+    take_profit = ':bullseye: تنظیم حد سود',
+)
+inline_keys = SimpleNamespace(
+    delete_symbol = ':wastebasket: حذف نماد',
+    stop_loss = ':no_entry: حد ضرر',
+    take_profit = ':bullseye: حد سود',
 )
 
 keyboards = SimpleNamespace(
     main = create_keyboard(keys.portfolio),
     exit = create_keyboard(keys.exit),
     symbol = create_keyboard(keys.add_symbol, keys.exit, row_width=1),
-    portfolio = create_keyboard(keys.delete_symbol, keys.exit, row_width=1),
+    portfolio = create_keyboard(
+        keys.take_profit, keys.stop_loss,
+        keys.delete_symbol, keys.exit,
+        row_width=2
+        ),
+)
+
+inline_keyboards = SimpleNamespace(
+    portfolio = create_keyboard(
+    inline_keys.take_profit, inline_keys.stop_loss,
+    inline_keys.delete_symbol,
+    is_inline=True, inline_row_width=3,
+    ),
 )
 
 states  = SimpleNamespace(
@@ -22,6 +41,8 @@ states  = SimpleNamespace(
     ADDING_SYMBOL = 'ADDING SYMBOL',
     DELETE = 'DELETE',
     PORTFOLIO = 'PORTFOLIO',
+    STOP_LOSS = 'STOP LOSS',
+    TAKE_PROFIT = 'TAKE PROFIT',
 )
 
 urls = SimpleNamespace(
@@ -73,4 +94,10 @@ SYMBOL_INFO_MESSAGE = (
     '<strong>{symbol}</strong>'
     f"\n {30 * 'ـ'}"
     '\n\n قیمت معامله: {last_price} ریال'
+)
+STOP_LOSS_MESSAGE = (
+    "نمادی که می‌خوای حد ضرر بذاری رو تایپ کن."
+)
+TAKE_PROFIT_MESSAGE = (
+    "نمادی که می‌خوای حد سود بذاری رو تایپ کن."
 )

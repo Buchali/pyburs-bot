@@ -3,7 +3,7 @@ from loguru import logger
 
 import constants
 from src.bot import bot
-from src.constants import keyboards, keys, states
+from src.constants import keyboards, keys, states, inline_keyboards, inline_keys
 from src.db import mongodb
 from src.stock import Stock
 from src.users import Users
@@ -54,22 +54,14 @@ class BursBot():
             # user wants to delete a symbol
             if self.user.state == states.DELETE:
                 portfolio = self.user.portfolio
-                deleted_symbol = portfolio.pop(message.text, None)
-                if deleted_symbol is None:
-                    self.send_message(
-                    message.chat.id,
-                    constants.NOT_IN_PORTFOLIO_MESSAGE.format(symbol=message.text),
-                    reply_markup=keyboards.portfolio
-                    )
-                    self.user.update_state(states.PORTFOLIO)
-                else:
-                    self.user.update_portfolio(portfolio)
-                    self.send_message(
-                    message.chat.id,
-                    constants.DELETED_MESSAGE.format(symbol=message.text),
-                    reply_markup=keyboards.main
-                    )
-                    self.user.update_state(states.MAIN)
+                portfolio.pop(message.text)
+                self.user.update_portfolio(portfolio)
+                self.send_message(
+                message.chat.id,
+                constants.DELETED_MESSAGE.format(symbol=message.text),
+                reply_markup=keyboards.main
+                )
+                self.user.update_state(states.MAIN)
 
         @self.bot.message_handler(func=lambda message: message.text in self.stock.all_symbols)
         def symbol(message):
@@ -121,18 +113,23 @@ class BursBot():
             self.send_message(
                 message.chat.id,
                 constants.PORTFOLIO_MESSAGE.format(portfolio=portfolio_text),
-                reply_markup=keyboards.portfolio
+                reply_markup=inline_keyboards.portfolio
                 )
             self.user.update_state(states.PORTFOLIO)
 
-        @self.bot.message_handler(regexp=keys.delete_symbol)
-        def delete_symbol(message):
+        @self.bot.callback_query_handler(func=lambda call: call.data in [inline_keys.stop_loss, inline_keys.take_profit])
+        def portfolio_callback(call):
+            self.answer_callback_query(call.id, text=call.data)
+
+        @self.bot.callback_query_handler(func=lambda call: call.data in inline_keys.delete_symbol)
+        def delete_symbol(call):
+            self.answer_callback_query(call.id, text=call.data)
             """
             Delete a symbol from portfolio
             """
             self.send_message(
-                message.chat.id,
-                constants.DELETE_SYMBOL_MESSAGE,
+                chat_id=call.message.chat.id,
+                text=constants.DELETE_SYMBOL_MESSAGE,
                 reply_markup=keyboards.exit
                 )
             self.user.update_state(states.DELETE)
@@ -171,6 +168,12 @@ class BursBot():
             text = emoji.emojize(text)
 
         self.bot.send_message(chat_id, text, reply_markup=reply_markup)
+
+    def answer_callback_query(self, call_id, text, emojize=True):
+        if emojize:
+            text = emoji.emojize(text)
+
+        self.bot.answer_callback_query(call_id, text=text)
 
 if __name__ == '__main__':
     logger.info('Bot Started!')
