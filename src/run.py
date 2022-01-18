@@ -3,7 +3,8 @@ from loguru import logger
 
 import constants
 from src.bot import bot
-from src.constants import keyboards, keys, states, inline_keyboards, inline_keys
+from src.constants import (inline_keyboards, inline_keys, keyboards, keys,
+                           portfo_attr, states)
 from src.db import mongodb
 from src.stock import Stock
 from src.users import Users
@@ -39,34 +40,29 @@ class BursBot():
             """
             Handles '/start' command.
             """
-            self.user.update_state(states.MAIN)
             self.send_message(
                 message.chat.id,
                 constants.START_MESSAGE.format(first_name=message.chat.first_name),
                 reply_markup=keyboards.main
                 )
+            self.user.update_state(states.MAIN)
+
         @self.bot.message_handler(func=lambda message: message.text in self.user.portfolio)
         def portfolio_symbol(message):
             """
-            Handles portfolio symbols.
+            Send message to user when typing a portfolio symbol.
             """
             self.user.update_current_symbol(message.text)
-            # user wants to delete a symbol
-            if self.user.state == states.DELETE:
-                portfolio = self.user.portfolio
-                portfolio.pop(message.text)
-                self.user.update_portfolio(portfolio)
-                self.send_message(
+            self.send_message(
                 message.chat.id,
-                constants.DELETED_MESSAGE.format(symbol=message.text),
+                constants.ISIN_PORTFOLIO_MESSAGE.format(message.text),
                 reply_markup=keyboards.main
-                )
-                self.user.update_state(states.MAIN)
+            )
 
         @self.bot.message_handler(func=lambda message: message.text in self.stock.all_symbols)
         def symbol(message):
             """
-            Handles all symbols except the portfolio ones.
+            Handles all new symbols typed by the user.
             """
             self.user.update_current_symbol(message.text)
             self.send_message(
@@ -77,6 +73,37 @@ class BursBot():
                 ),
                 reply_markup=keyboards.symbol
             )
+
+        @self.bot.message_handler(func=lambda message: message.text.isnumeric())
+        def set_limit(message):
+            """
+            Handles all new symbols typed by the user.
+            """
+            current_symbol = self.user.current_symbol
+            if not current_symbol:
+                return
+
+            portfolio = self.user.portfolio
+            if (self.user.state == states.STOP_LOSS):
+                portfolio[current_symbol][portfo_attr.STOP_LOSS] = int(message.text)
+                self.send_message(
+                    message.chat.id,
+                    constants.STOP_LOSS_ADDED_MESSAGE.format(
+                        symbol=current_symbol
+                    ),
+                    reply_markup=keyboards.main
+                )
+            elif (self.user.state == states.TAKE_PROFIT):
+                portfolio[current_symbol][portfo_attr.TAKE_PROFIT] = int(message.text)
+                self.send_message(
+                    message.chat.id,
+                    constants.TAKE_PROFIT_ADDED_MESSAGE.format(
+                        symbol=current_symbol
+                    ),
+                    reply_markup=keyboards.main
+                )
+
+            self.user.update_portfolio(portfolio)
 
         @self.bot.message_handler(regexp=keys.add_symbol)
         def add_symbol(message):
@@ -98,7 +125,7 @@ class BursBot():
         @self.bot.message_handler(regexp=keys.portfolio)
         def portfolio(message):
             """
-            Display portfolio.
+            Display portfolio symbols.
             """
             # Notify if portfolio is empty.
             if not self.user.portfolio.keys():
@@ -109,30 +136,80 @@ class BursBot():
                 )
                 return
 
-            portfolio_text = '\n'.join(self.user.portfolio.keys())
-            self.send_message(
-                message.chat.id,
-                constants.PORTFOLIO_MESSAGE.format(portfolio=portfolio_text),
-                reply_markup=inline_keyboards.portfolio
-                )
+            # Porfolio is not empty
+            self.send_message( message.chat.id,
+            constants.PORTFOLIO_MESSAGE,
+            reply_markup=keyboards.exit
+            )
+
+            # Send each symbol in a seperate message with inline keys
+            for mysymbol in self.user.portfolio.keys():
+                stop_loss = self.user.portfolio[mysymbol].get(portfo_attr.STOP_LOSS) or 'NA'
+                take_profit = self.user.portfolio[mysymbol].get(portfo_attr.TAKE_PROFIT) or 'NA'
+                self.send_message(
+                    message.chat.id,
+                    constants.PORTFOLIO_SYMBOL_MESSAGE.format(
+                        symbol=mysymbol,
+                        last_price=self.stock.last_price(mysymbol),
+                        stop_loss=stop_loss, take_profit=take_profit
+                    ),
+                    reply_markup=inline_keyboards.portfolio
+                    )
             self.user.update_state(states.PORTFOLIO)
 
-        @self.bot.callback_query_handler(func=lambda call: call.data in [inline_keys.stop_loss, inline_keys.take_profit])
-        def portfolio_callback(call):
+        @self.bot.callback_query_handler(func=lambda call: call.data in inline_keys.stop_loss)
+        def stop_loss_callback(call):
+            """
+            Stop loss call back.
+            """
+            current_symbol = call.message.text.splitlines()[0]
             self.answer_callback_query(call.id, text=call.data)
+            self.send_message(
+                call.message.chat.id,
+                constants.ASK_STOP_LOSS_MESSAGE.format(
+                    symbol=current_symbol
+                ),
+                reply_markup=keyboards.exit
+            )
+            self.user.update_state(states.STOP_LOSS)
+            self.user.update_current_symbol(current_symbol)
+
+        @self.bot.callback_query_handler(func=lambda call: call.data in inline_keys.take_profit)
+        def take_profit_callback(call):
+            """
+            Take profit call back.
+            """
+            current_symbol = call.message.text.splitlines()[0]
+            self.answer_callback_query(call.id, text=call.data)
+            self.send_message(
+                call.message.chat.id,
+                constants.ASK_TAKE_PROFIT_MESSAGE.format(
+                    symbol=current_symbol
+                ),
+                reply_markup=keyboards.exit
+            )
+            self.user.update_state(states.TAKE_PROFIT)
+            self.user.update_current_symbol(current_symbol)
 
         @self.bot.callback_query_handler(func=lambda call: call.data in inline_keys.delete_symbol)
         def delete_symbol(call):
-            self.answer_callback_query(call.id, text=call.data)
             """
-            Delete a symbol from portfolio
+            Delete a symbol from portfolio.
             """
-            self.send_message(
-                chat_id=call.message.chat.id,
-                text=constants.DELETE_SYMBOL_MESSAGE,
-                reply_markup=keyboards.exit
+            current_symbol = call.message.text.splitlines()[0]
+            self.answer_callback_query(
+                call.id,
+                text=constants.DELETED_MESSAGE.format(symbol=current_symbol)
                 )
-            self.user.update_state(states.DELETE)
+            portfolio = self.user.portfolio
+            portfolio.pop(current_symbol)
+            self.user.update_portfolio(portfolio)
+
+            # Delete the symbol from portfolio instantly
+            self.delete_message(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id
+                )
 
         @self.bot.message_handler(regexp=keys.exit)
         def exit(message):
@@ -170,10 +247,19 @@ class BursBot():
         self.bot.send_message(chat_id, text, reply_markup=reply_markup)
 
     def answer_callback_query(self, call_id, text, emojize=True):
+        """
+        Answer callback.
+        """
         if emojize:
             text = emoji.emojize(text)
 
         self.bot.answer_callback_query(call_id, text=text)
+
+    def delete_message(self, chat_id, message_id: str):
+        """
+        Delete bot message.
+        """
+        self.bot.delete_message(chat_id=chat_id, message_id=message_id)
 
 if __name__ == '__main__':
     logger.info('Bot Started!')

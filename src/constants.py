@@ -45,6 +45,10 @@ states  = SimpleNamespace(
     TAKE_PROFIT = 'TAKE PROFIT',
 )
 
+portfo_attr = SimpleNamespace(
+    STOP_LOSS = 'stop_loss',
+    TAKE_PROFIT = 'take_profit'
+)
 urls = SimpleNamespace(
     TSE_SYMBOL_INFO = "http://www.tsetmc.com/tsev2/data/instinfofast.aspx?i={index}&c=0&e=1",
     TSE_SYMBOL_ADDRESS = "http://tsetmc.com/Loader.aspx?ParTree=151311&i={index}",
@@ -75,13 +79,16 @@ ADD_SYMBOL_MESSAGE = (
 PORTFOLIO_MESSAGE = (
     "پورتفوی شما :basket: \n"
     f"{20 * '_'} \n\n"
-    '{portfolio}'
+)
+PORTFOLIO_SYMBOL_MESSAGE = (
+    '{symbol}\n\n'
+    '|قیمت معامله: {last_price} | حد ضرر: {stop_loss} | حد سود: {take_profit}|'
 )
 DELETE_SYMBOL_MESSAGE = (
     "نمادی که می‌خوای حذف شه رو تایپ کن."
 )
 DELETED_MESSAGE = (
-    '<strong>{symbol}</strong> با موفقیت از پورتفو حذف شد :wastebasket::check_mark_button:'
+    '{symbol} با موفقیت از پورتفو حذف شد :wastebasket::check_mark_button:'
 )
 NOT_IN_PORTFOLIO_MESSAGE = (
     'متاسفانه، نمادی با نام {symbol} در پرتفو شما وجود ندارد! :thumbs_down:'
@@ -89,15 +96,23 @@ NOT_IN_PORTFOLIO_MESSAGE = (
 EMPTY_PORTFOLIO_MESSAGE = (
     "هیچ نمادی در پرتفو وجود ندارد! "
 )
-
 SYMBOL_INFO_MESSAGE = (
     '<strong>{symbol}</strong>'
     f"\n {30 * 'ـ'}"
     '\n\n قیمت معامله: {last_price} ریال'
 )
-STOP_LOSS_MESSAGE = (
-    "نمادی که می‌خوای حد ضرر بذاری رو تایپ کن."
+ASK_STOP_LOSS_MESSAGE = (
+    "حد ضرر مورد نظرتو برای نماد {symbol} به ریال وارد کن."
 )
-TAKE_PROFIT_MESSAGE = (
-    "نمادی که می‌خوای حد سود بذاری رو تایپ کن."
+ASK_TAKE_PROFIT_MESSAGE = (
+    "حد سود مورد نظرتو برای نماد {symbol} به ریال وارد کن."
+)
+ISIN_PORTFOLIO_MESSAGE = (
+    'نماد <strong>{}</strong> قبلاً به پرتفو اضافه شده است!'
+)
+STOP_LOSS_ADDED_MESSAGE = (
+    'حد ضرر نماد {symbol} با موفقیت تنظیم شد. :check_mark_button:'
+)
+TAKE_PROFIT_ADDED_MESSAGE = (
+    'حد سود نماد {symbol} با موفقیت تنظیم شد. :check_mark_button:'
 )

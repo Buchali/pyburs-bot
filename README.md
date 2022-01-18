@@ -1,6 +1,6 @@
-# Template for Telegram Bot
+# Burs Bot
 
-This is a template repo for designing a telegram bot.
+This is a telegram bot for Tehran Stock Market. Using this, make a porfolio and set stop loss / take profit alerts.
 
 ## How to run?
 First, add `src` to `PYTHONPATH`:
