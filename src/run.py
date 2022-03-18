@@ -6,7 +6,7 @@ from src.bot import bot
 from src.constants import (inline_keyboards, inline_keys, keyboards, keys,
                            portfo_attr, states)
 from src.db import mongodb
-from src.stock import Stock
+from api import BursAPI
 from src.users import Users
 
 
@@ -23,8 +23,8 @@ class BursBot():
         # database
         self.db = db
 
-        # Load stock
-        self.stock = Stock()
+        # Load bursAPI
+        self.bursAPI = BursAPI()
 
     def handlers(self):
         @self.bot.middleware_handler(update_types=['message'])
@@ -32,8 +32,8 @@ class BursBot():
             """
             Initialize Handelers.
             """
-            self.user = Users(chat_id=message.chat.id, bursbot= self, mongodb=self.db, message= message)
-            message.text = emoji.demojize(message.text)
+            self.user = Users(chat_id=message.chat.id, bursbot= self, mongodb=self.db)
+            # message.text = emoji.demojize(message.text)
 
         @self.bot.message_handler(commands=['start'])
         def start(message):
@@ -59,7 +59,7 @@ class BursBot():
                 reply_markup=keyboards.main
             )
 
-        @self.bot.message_handler(func=lambda message: message.text in self.stock.all_symbols)
+        @self.bot.message_handler(func=lambda message: message.text in self.bursAPI.all_symbols)
         def symbol(message):
             """
             Handles all new symbols typed by the user.
@@ -69,7 +69,7 @@ class BursBot():
                 message.chat.id,
                 constants.SYMBOL_INFO_MESSAGE.format(
                     symbol=message.text,
-                    last_price=self.stock.last_price(message.text)
+                    last_price=self.bursAPI.last_price(message.text)
                 ),
                 reply_markup=keyboards.symbol
             )
@@ -77,7 +77,7 @@ class BursBot():
         @self.bot.message_handler(func=lambda message: message.text.isnumeric())
         def set_limit(message):
             """
-            Handles all new symbols typed by the user.
+            setting limit for symbols.
             """
             current_symbol = self.user.current_symbol
             if not current_symbol:
@@ -112,7 +112,7 @@ class BursBot():
             """
             current_symbol = self.user.current_symbol
             portfolio = self.user.portfolio
-            portfolio[current_symbol] = self.stock.all_symbols[current_symbol]
+            portfolio[current_symbol] = self.bursAPI.all_symbols[current_symbol]
             self.user.update_portfolio(portfolio)
 
             self.send_message(
@@ -150,7 +150,7 @@ class BursBot():
                     message.chat.id,
                     constants.PORTFOLIO_SYMBOL_MESSAGE.format(
                         symbol=mysymbol,
-                        last_price=self.stock.last_price(mysymbol),
+                        last_price=self.bursAPI.last_price(mysymbol),
                         stop_loss=stop_loss, take_profit=take_profit
                     ),
                     reply_markup=inline_keyboards.portfolio

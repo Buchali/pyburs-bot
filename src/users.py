@@ -1,9 +1,8 @@
 class Users:
-    def __init__(self, chat_id, bursbot, mongodb, message):
+    def __init__(self, chat_id, bursbot, mongodb):
         self.chat_id = chat_id
         self.bursbot = bursbot
         self.db = mongodb
-        self.message = message
 
     @property
     def user(self):

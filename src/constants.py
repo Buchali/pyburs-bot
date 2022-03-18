@@ -30,9 +30,9 @@ keyboards = SimpleNamespace(
 
 inline_keyboards = SimpleNamespace(
     portfolio = create_keyboard(
-    inline_keys.take_profit, inline_keys.stop_loss,
-    inline_keys.delete_symbol,
-    is_inline=True, inline_row_width=3,
+        inline_keys.take_profit, inline_keys.stop_loss,
+        inline_keys.delete_symbol,
+        is_inline=True, inline_row_width=3,
     ),
 )
 
