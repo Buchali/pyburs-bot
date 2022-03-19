@@ -33,7 +33,7 @@ class BursBot():
             Initialize Handelers.
             """
             self.user = Users(chat_id=message.chat.id, bursbot= self, mongodb=self.db)
-            # message.text = emoji.demojize(message.text)
+            message.text = emoji.demojize(message.text)
 
         @self.bot.message_handler(commands=['start'])
         def start(message):
