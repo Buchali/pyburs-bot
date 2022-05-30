@@ -1,6 +1,6 @@
 import requests
 
-from src.constants import urls
+from constants.constant_url import urls
 from src.data import DATA_DIR
 from src.utils.io import read_json
 

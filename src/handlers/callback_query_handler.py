@@ -1,6 +1,7 @@
 import emoji
-from src import constants
-from src.constants import inline_keys, keyboards, states
+from src.constants import constant_message
+from constants.constant_keyboards import inline_keys, keyboards
+from constants.constant_other import states
 from src.users import Users
 
 
@@ -27,7 +28,7 @@ class CallbackQueryHandler:
             self.bursbot.answer_callback_query(call.id, text=call.data)
             self.bursbot.send_message(
                 call.message.chat.id,
-                constants.ASK_STOP_LOSS_MESSAGE.format(
+                constant_message.ASK_STOP_LOSS.format(
                     symbol=current_symbol
                 ),
                 reply_markup=keyboards.exit
@@ -44,7 +45,7 @@ class CallbackQueryHandler:
             self.bursbot.answer_callback_query(call.id, text=call.data)
             self.bursbot.send_message(
                 call.message.chat.id,
-                constants.ASK_TAKE_PROFIT_MESSAGE.format(
+                constant_message.ASK_TAKE_PROFIT.format(
                     symbol=current_symbol
                 ),
                 reply_markup=keyboards.exit
@@ -60,7 +61,7 @@ class CallbackQueryHandler:
             current_symbol = call.message.text.splitlines()[0]
             self.bursbot.answer_callback_query(
                 call.id,
-                text=constants.DELETED_MESSAGE.format(symbol=current_symbol)
+                text=constant_message.DELETED.format(symbol=current_symbol)
                 )
             portfolio = self.bursbot.user.portfolio
             portfolio.pop(current_symbol)

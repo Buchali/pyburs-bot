@@ -1,7 +1,7 @@
 import emoji
-from src import constants
-from src.constants import (inline_keyboards, keyboards, keys, portfo_attr,
-                           states)
+from constants.constant_keyboards import inline_keyboards, keyboards, keys
+from constants.constant_other import portfo_attr, states
+from src.constants import constant_message
 from src.users import Users
 
 
@@ -26,7 +26,7 @@ class MessageHandler:
             """
             self.bursbot.send_message(
                 message.chat.id,
-                constants.START_MESSAGE.format(first_name=message.chat.first_name),
+                constant_message.START.format(first_name=message.chat.first_name),
                 reply_markup=keyboards.main
                 )
             self.bursbot.user.update_state(states.MAIN)
@@ -39,7 +39,7 @@ class MessageHandler:
             self.bursbot.user.update_current_symbol(message.text)
             self.bursbot.send_message(
                 message.chat.id,
-                constants.ISIN_PORTFOLIO_MESSAGE.format(message.text),
+                constant_message.ISIN_PORTFOLIO.format(message.text),
                 reply_markup=keyboards.main
             )
 
@@ -51,7 +51,7 @@ class MessageHandler:
             self.bursbot.user.update_current_symbol(message.text)
             self.bursbot.send_message(
                 message.chat.id,
-                constants.SYMBOL_INFO_MESSAGE.format(
+                constant_message.SYMBOL_INFO.format(
                     symbol=message.text,
                     last_price=self.bursbot.scraper.last_price(message.text)
                 ),
@@ -72,7 +72,7 @@ class MessageHandler:
                 portfolio[current_symbol][portfo_attr.STOP_LOSS] = int(message.text)
                 self.bursbot.send_message(
                     message.chat.id,
-                    constants.STOP_LOSS_ADDED_MESSAGE.format(
+                    constant_message.STOP_LOSS_ADDED.format(
                         symbol=current_symbol
                     ),
                     reply_markup=keyboards.main
@@ -81,7 +81,7 @@ class MessageHandler:
                 portfolio[current_symbol][portfo_attr.TAKE_PROFIT] = int(message.text)
                 self.bursbot.send_message(
                     message.chat.id,
-                    constants.TAKE_PROFIT_ADDED_MESSAGE.format(
+                    constant_message.TAKE_PROFIT_ADDED.format(
                         symbol=current_symbol
                     ),
                     reply_markup=keyboards.main
@@ -101,7 +101,7 @@ class MessageHandler:
 
             self.bursbot.send_message(
                 message.chat.id,
-                constants.ADD_SYMBOL_MESSAGE.format(symbol=current_symbol),
+                constant_message.ADD_SYMBOL.format(symbol=current_symbol),
                 reply_markup=keyboards.main
                 )
             self.bursbot.user.update_state(states.MAIN)
@@ -115,14 +115,14 @@ class MessageHandler:
             if not self.bursbot.user.portfolio.keys():
                 self.bursbot.send_message(
                 message.chat.id,
-                constants.EMPTY_PORTFOLIO_MESSAGE,
+                constant_message.EMPTY_PORTFOLIO,
                 reply_markup=keyboards.exit
                 )
                 return
 
             # Porfolio is not empty
             self.bursbot.send_message( message.chat.id,
-            constants.PORTFOLIO_MESSAGE,
+            constant_message.PORTFOLIO,
             reply_markup=keyboards.exit
             )
 
@@ -132,7 +132,7 @@ class MessageHandler:
                 take_profit = self.bursbot.user.portfolio[mysymbol].get(portfo_attr.TAKE_PROFIT) or 'NA'
                 self.bursbot.send_message(
                     message.chat.id,
-                    constants.PORTFOLIO_SYMBOL_MESSAGE.format(
+                    constant_message.PORTFOLIO_SYMBOL.format(
                         symbol=mysymbol,
                         last_price=self.bursbot.scraper.last_price(mysymbol),
                         stop_loss=stop_loss, take_profit=take_profit
@@ -148,7 +148,7 @@ class MessageHandler:
             """
             self.bursbot.send_message(
                 message.chat.id,
-                constants.EXIT_MESSAGE,
+                constant_message.EXIT,
                 reply_markup=keyboards.main
                 )
             self.bursbot.user.update_state(states.MAIN)
@@ -158,4 +158,4 @@ class MessageHandler:
             """
             User typed an unidentifed symbol, message, command ...
             """
-            self.bursbot.send_message(message.chat.id, constants.NOT_SYMBOL_MESSAGE.format(symbol=message.text))
+            self.bursbot.send_message(message.chat.id, constant_message.NOT_SYMBOL.format(symbol=message.text))
