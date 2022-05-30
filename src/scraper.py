@@ -5,7 +5,7 @@ from src.data import DATA_DIR
 from src.utils.io import read_json
 
 
-class BursAPI:
+class Scraper:
     """
     A class for scrapping burs symbol's info.
     """
