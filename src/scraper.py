@@ -1,4 +1,8 @@
+import concurrent.futures
+from itertools import zip_longest
+
 import requests
+from loguru import logger
 
 from constants.constant_url import urls
 from src.data import DATA_DIR
@@ -7,36 +11,52 @@ from src.utils.io import read_json
 
 class Scraper:
     """
-    A class for scrapping burs symbol's info.
+    A class for scrapping Tehran Stock Exchange symbol's info.
     """
     def __init__(self):
         # Load all symbols
-        self.all_symbols = read_json(DATA_DIR / 'all_symbols.json')
+        stocks_info = read_json(DATA_DIR / 'stocks_info.json')
+        symbols_urls = []
+        symbols = []
+        for symbol in stocks_info:
+            index = (stocks_info[symbol]['index'])
+            symbols_urls.append(urls.TSE_SYMBOL_INFO.format(index=index))
+            symbols.append(symbol)
 
-    def get_symbol_info(self, url: str) -> list:
+        self.stocks_info = stocks_info
+        self.symbols = symbols
+        self.stock_urls = symbols_urls
+
+    def scrape_stock_url(self, stock_url: str) -> dict:
         """
-        Scrapes all the symbol information using the url and return them in a list.
+        Scrapes the instant data using the url.
         """
+        keys = ['time', 'state',
+          'pl', 'pc',
+          'pf', 'py',
+          'pmin', 'pmax',
+          'tno', 'tvol',
+          'tval']
+
         try:
-            response = requests.get(url, timeout=5)
-            return response.text.split(";")[0].split(",")
+            response = requests.get(stock_url, timeout=5)
+            values = response.text.split(";")[0].split(",")
         except:
-            return None
+            values = []
 
-    def last_price(self, symbol: str) -> int:
-        """
-        Scrape the last price using the symbol name.
-        """
-        url = self.get_symbol_info_url(symbol)
-        try:
-            lprice = self.get_symbol_info(url)[2]
-            return int(lprice)
-        except:
-            return None
+        return dict(zip_longest(keys, values))
 
-    def get_symbol_info_url(self, symbol: str):
+    def scrape_instant_data(self) -> dict:
         """
-        Gives back the url using the symbol name.
+        Scrapes all symbols' instant data.
         """
-        index = self.all_symbols[symbol]['index']
-        return urls.TSE_SYMBOL_INFO.format(index=index)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+            results = executor.map(self.scrape_stock_url, self.stock_urls)
+
+        return dict(zip(self.symbols, list(results)))
+
+if __name__ == '__main__':
+    scraper = Scraper()
+    all_data = scraper.scrape_instant_data()
+    example = all_data['پالایش']
+    logger.info(example)
