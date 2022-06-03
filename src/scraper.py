@@ -17,14 +17,7 @@ class Scraper:
         # Load all symbols
         symbols_info = read_json(DATA_DIR / 'symbols_info.json')
         self.symbols_info = symbols_info
-        symbols_urls = []
-        symbols = []
-        for symbol in symbols_info:
-            symbols_urls.append(self.get_symbol_url(symbol))
-            symbols.append(symbol)
-
-        self.symbols = symbols
-        self.symbol_urls = symbols_urls
+        self.symbols = list(symbols_info.keys())
 
     def get_symbol_url(self, symbol: str) -> str:
         """
@@ -33,14 +26,14 @@ class Scraper:
         index = (self.symbols_info[symbol]['index'])
         return urls.TSE_SYMBOL_INFO.format(index=index)
 
-    def scrape_symbol_url(self, symbol_url: str) -> dict:
+    def scrape_symbol_data(self, symbol: str) -> dict:
         """
         Scrapes the instant data using the url.
         """
         keys = ['time', 'state', 'pl', 'pc',
                 'pf', 'py', 'pmin', 'pmax',
                 'tno', 'tvol','tval']
-
+        symbol_url = self.get_symbol_url(symbol)
         try:
             response = requests.get(symbol_url, timeout=5)
             values = response.text.split(";")[0].split(",")
@@ -53,15 +46,19 @@ class Scraper:
         """
         Returns the symbol's data.
         """
-        symbol_url = self.get_symbol_url(symbol)
-        return self.scrape_symbol_url(symbol_url)
+        symbols_data_path = DATA_DIR / 'symbols_data.json'
+        if symbols_data_path.exists():
+            symbols_data = read_json(symbols_data_path)
+            return symbols_data[symbol]
+
+        return self.scrape_symbol_data(symbol)
 
     def scrape_all_data(self) -> dict:
         """
         Scrapes all symbols' instant data.
         """
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-            results = executor.map(self.scrape_symbol_url, self.symbol_urls)
+            results = executor.map(self.scrape_symbol_data, self.symbols)
 
         return dict(zip(self.symbols, list(results)))
 
@@ -76,4 +73,5 @@ class Scraper:
 
 if __name__ == '__main__':
     scraper = Scraper()
-    scraper.write_all_data_json()
+    symbol_data = scraper.get_symbol_data('پالایش')
+    logger.info(symbol_data)
