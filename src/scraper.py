@@ -15,48 +15,59 @@ class Scraper:
     """
     def __init__(self):
         # Load all symbols
-        stocks_info = read_json(DATA_DIR / 'stocks_info.json')
+        symbols_info = read_json(DATA_DIR / 'symbols_info.json')
+        self.symbols_info = symbols_info
         symbols_urls = []
         symbols = []
-        for symbol in stocks_info:
-            index = (stocks_info[symbol]['index'])
-            symbols_urls.append(urls.TSE_SYMBOL_INFO.format(index=index))
+        for symbol in symbols_info:
+            symbols_urls.append(self.get_symbol_url(symbol))
             symbols.append(symbol)
 
-        self.stocks_info = stocks_info
         self.symbols = symbols
-        self.stock_urls = symbols_urls
+        self.symbol_urls = symbols_urls
 
-    def scrape_stock_url(self, stock_url: str) -> dict:
+    def get_symbol_url(self, symbol: str) -> str:
+        """
+        Get symbol url based on its symbol.
+        """
+        index = (self.symbols_info[symbol]['index'])
+        return urls.TSE_SYMBOL_INFO.format(index=index)
+
+    def scrape_symbol_url(self, symbol_url: str) -> dict:
         """
         Scrapes the instant data using the url.
         """
-        keys = ['time', 'state',
-          'pl', 'pc',
-          'pf', 'py',
-          'pmin', 'pmax',
-          'tno', 'tvol',
-          'tval']
+        keys = ['time', 'state', 'pl', 'pc',
+                'pf', 'py', 'pmin', 'pmax',
+                'tno', 'tvol','tval']
 
         try:
-            response = requests.get(stock_url, timeout=5)
+            response = requests.get(symbol_url, timeout=5)
             values = response.text.split(";")[0].split(",")
         except:
             values = []
 
         return dict(zip_longest(keys, values))
 
-    def scrape_instant_data(self) -> dict:
+    def get_symbol_data(self, symbol: str) -> dict:
+        """
+        Returns the symbol's data.
+        """
+        symbol_url = self.get_symbol_url(symbol)
+        return self.scrape_symbol_url(symbol_url)
+
+    def scrape_all_data(self) -> dict:
         """
         Scrapes all symbols' instant data.
         """
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-            results = executor.map(self.scrape_stock_url, self.stock_urls)
+            results = executor.map(self.scrape_symbol_url, self.symbol_urls)
 
         return dict(zip(self.symbols, list(results)))
 
+
+
 if __name__ == '__main__':
     scraper = Scraper()
-    all_data = scraper.scrape_instant_data()
-    example = all_data['پالایش']
+    example = scraper.get_symbol_data('فرابورس')
     logger.info(example)

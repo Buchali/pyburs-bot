@@ -43,7 +43,7 @@ class MessageHandler:
                 reply_markup=keyboards.main
             )
 
-        @self.bursbot.bot.message_handler(func=lambda message: message.text in self.bursbot.scraper.all_symbols)
+        @self.bursbot.bot.message_handler(func=lambda message: message.text in self.bursbot.scraper.symbols_info)
         def symbol(message):
             """
             Handles all new symbols typed by the user.
@@ -53,7 +53,7 @@ class MessageHandler:
                 message.chat.id,
                 constant_message.SYMBOL_INFO.format(
                     symbol=message.text,
-                    last_price=self.bursbot.scraper.last_price(message.text)
+                    last_price=self.bursbot.scraper.get_symbol_data(message.text)['pl']
                 ),
                 reply_markup=keyboards.symbol
             )
@@ -96,7 +96,7 @@ class MessageHandler:
             """
             current_symbol = self.bursbot.user.current_symbol
             portfolio = self.bursbot.user.portfolio
-            portfolio[current_symbol] = self.bursbot.scraper.all_symbols[current_symbol]
+            portfolio[current_symbol] = self.bursbot.scraper.symbols_info[current_symbol]
             self.bursbot.user.update_portfolio(portfolio)
 
             self.bursbot.send_message(
@@ -134,7 +134,7 @@ class MessageHandler:
                     message.chat.id,
                     constant_message.PORTFOLIO_SYMBOL.format(
                         symbol=mysymbol,
-                        last_price=self.bursbot.scraper.last_price(mysymbol),
+                        last_price=self.bursbot.scraper.get_symbol_data(mysymbol)['pl'],
                         stop_loss=stop_loss, take_profit=take_profit
                     ),
                     reply_markup=inline_keyboards.portfolio
