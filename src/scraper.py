@@ -6,7 +6,7 @@ from loguru import logger
 
 from constants.constant_url import urls
 from src.data import DATA_DIR
-from src.utils.io import read_json
+from src.utils.io import read_json, write_json
 
 
 class Scraper:
@@ -65,9 +65,15 @@ class Scraper:
 
         return dict(zip(self.symbols, list(results)))
 
+    def write_all_data_json(self):
+        """
+        Writes all symbols' instant data to json file.
+        """
+        symbols_data = self.scrape_all_data()
+        logger.info(f'Writing {len(symbols_data)} symbols data to json file.')
+        write_json(symbols_data, DATA_DIR / 'symbols_data.json', ensure_ascii=False)
 
 
 if __name__ == '__main__':
     scraper = Scraper()
-    example = scraper.get_symbol_data('فرابورس')
-    logger.info(example)
+    scraper.write_all_data_json()

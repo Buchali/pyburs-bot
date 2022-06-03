@@ -4,6 +4,6 @@ def read_json(file_path):
     with open(file_path, 'r') as f:
         return json.load(f)
 
-def write_json(data, file_path, indent=4):
+def write_json(data, file_path, indent=4, ensure_ascii=False):
     with open(file_path, 'w') as f:
-        json.dump(data, f, indent=indent)
+        json.dump(data, f, indent=indent, ensure_ascii=ensure_ascii)
