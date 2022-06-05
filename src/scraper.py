@@ -1,4 +1,5 @@
 import concurrent.futures
+import time
 from itertools import zip_longest
 
 import requests
@@ -55,23 +56,31 @@ class Scraper:
 
     def scrape_all_data(self) -> dict:
         """
-        Scrapes all symbols' instant data.
+        Scrapes all symbols' data.
         """
-        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             results = executor.map(self.scrape_symbol_data, self.symbols)
 
         return dict(zip(self.symbols, list(results)))
 
-    def write_all_data_json(self):
+    def download_all_data_json(self):
         """
-        Writes all symbols' instant data to json file.
+        Writes all symbols' data to json file.
         """
         symbols_data = self.scrape_all_data()
         logger.info(f'Writing {len(symbols_data)} symbols data to json file.')
         write_json(symbols_data, DATA_DIR / 'symbols_data.json', ensure_ascii=False)
 
+    def run(self, interval: int = 300):
+        """
+        Scrapes all symbols' data regularly every [interval] sec.
+        """
+        while True:
+            self.download_all_data_json()
+            logger.info("All data scraped succussfully.")
+            time.sleep(interval)
 
 if __name__ == '__main__':
     scraper = Scraper()
-    symbol_data = scraper.get_symbol_data('پالایش')
-    logger.info(symbol_data)
+    scraper.download_all_data()
+    logger.info('DONE')
