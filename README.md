@@ -18,7 +18,7 @@ Or, to download Tehran Stock Market Data run the scraper:
 pyrhon src/scraper.py
 ```
 
-To run both the telegram bot and the data scraper them simultaneously:
+To run both the telegram bot and the data scraper simultaneously:
 ```
 python src/run.py
 ```
