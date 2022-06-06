@@ -83,5 +83,5 @@ class Scraper:
 
 if __name__ == '__main__':
     scraper = Scraper()
-    scraper.download_all_data()
+    scraper.download_all_data_json()
     logger.info('DONE')
