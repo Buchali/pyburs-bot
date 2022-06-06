@@ -36,7 +36,7 @@ class Scraper:
                 'tno', 'tvol','tval']
         symbol_url = self.get_symbol_url(symbol)
         try:
-            response = requests.get(symbol_url, timeout=5)
+            response = requests.get(symbol_url, timeout=2)
             values = response.text.split(";")[0].split(",")
         except:
             values = []
@@ -76,8 +76,9 @@ class Scraper:
         Scrapes all symbols' data regularly every [interval] sec.
         """
         while True:
+            logger.info('Scraping Starts...')
             self.download_all_data_json()
-            logger.info("All data scraped succussfully.")
+            logger.info("All Data Scraped succussfully.")
             time.sleep(interval)
 
 if __name__ == '__main__':

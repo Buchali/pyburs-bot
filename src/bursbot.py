@@ -1,7 +1,7 @@
 import emoji
 from loguru import logger
 
-from scraper import Scraper
+from src.scraper import Scraper
 from src.bot import bot
 from src.db import mongodb
 from src.handlers import CallbackQueryHandler, MessageHandler
@@ -15,11 +15,11 @@ class BursBot():
         # telebot
         self.bot = telebot
 
-        # scraper
-        self.scraper = Scraper()
-
         # database
         self.db = db
+
+        # scraper
+        self.scraper = Scraper()
 
         # register handlers
         self.handlers = [
@@ -37,7 +37,7 @@ class BursBot():
         Run the bot.
         """
         logger.info('Bot is running...')
-        # self.bot.infinity_polling()
+        self.bot.infinity_polling()
 
     def send_message(self, chat_id, text, reply_markup=None, emojize=True):
         """
