@@ -131,3 +131,5 @@ dmypy.json
 # my custom .gitignore
 .vscode
 *.ipynb
+*.DS_Store
+src/data/symbols_data.json
